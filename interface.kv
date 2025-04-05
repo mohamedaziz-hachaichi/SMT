@@ -1,0 +1,353 @@
+<LoginScreen>:
+    FloatLayout:
+        # Background image with opacity
+        Image:
+            source: 'assets/valeo.jpg'
+            allow_stretch: True
+            keep_ratio: False
+            opacity: 1
+            pos_hint: {'center_x': 0.5, 'y': 0.4}
+            size_hint: 0.6, None  # Width is 60% of the available space
+            height: self.width  # Maintain the aspect ratio if needed, or set a specific height
+
+
+        # Login box (positioned at the bottom)
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 0.8, 0.4
+            pos_hint: {'center_x': 0.5, 'y': 0.1}  # Adjust position as needed
+            spacing: 10
+            padding: 10
+
+            # Email input
+            TextInput:
+                id: email_input
+                hint_text: "Email"
+                multiline: False
+                size_hint: 1, 0.1
+                
+                
+
+            # Password input
+            TextInput:
+                id: password_input
+                hint_text: "Password"
+                multiline: False
+                password: True
+                size_hint: 1, 0.1
+                
+                
+
+            # Login button
+            Button:
+                id: login_button
+                text: "Login"
+                size_hint: 0.2, 0.1
+                background_color: (130 / 255, 230 / 255, 0 / 255, 1)  # Light blue color
+                background_normal: ''  # Remove default background
+                background_down: ''  # Remove default background
+                color: (1, 1, 1, 1)  # White text
+                pos_hint: {'center_x': 0.5}  # Adjust position as needed
+                canvas.before:
+                    Color:
+                        rgba: self.background_color
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [20,]  # Rounded corners
+                on_press: root.validate_login()
+
+                
+<SuccessScreen>:
+    FloatLayout:
+        Label:
+            text: "Hello, you successfully logged in!"
+            font_size: 24
+            color: (0, 0, 0, 1)  # Black text
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}  # Centered
+
+
+<HomeScreen>:
+    FloatLayout:
+        # ☰ icon (hamburger menu)
+        Button:
+            id: menu_button
+            text: '≡'  # Fallback symbol if ☰ is not supported
+            size_hint: (None, None)
+            size: (50, 50)
+            pos_hint: {'x': 0, 'top': 1}
+            font_size: 24
+            font_name: 'Arial'  # Use a font that supports the symbol
+            on_press: root.toggle_nav_drawer()
+
+        # Side navigation bar
+        BoxLayout:
+            id: nav_drawer
+            orientation: 'vertical'
+            size_hint: (0.2, 0.92)
+            pos_hint: {'x': -0.3, 'y': 0}
+            spacing: 10
+            padding: (10, 30, 10, 10)  # (Left, Top, Right, Bottom) - Moves buttons down
+            background_color: (0.2, 0.6, 1, 1)  # Light blue background
+            canvas.before:
+                # Draw a shadow for the side navigation bar
+                Color:
+                    rgba: (0, 0, 0, 0.5)  # Shadow color
+                Rectangle:
+                    pos: self.pos[0] - 10, self.pos[1] - 10
+                    size: self.size[0] + 15, self.size[1] + 0
+                # Draw the background of the side navigation bar
+                Color:
+                    rgba: (1, 1, 1, 1)  # Light blue background
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            # New wrapper to keep buttons lower & shifted left
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height  # Dynamically adjust height
+                pos_hint: {'top': 5.2, 'x': 0.009}  # Moves buttons slightly down & left
+                spacing: 10
+
+                # Buttons in the sidebar
+                Button:
+                    text: "Manage Users"
+                    size_hint_y: None
+                    height: 50
+                    background_color: (0.2, 0.6, 1, 1)
+                    color: (1, 1, 1, 1)
+                    on_press: root.navigate_to('manage_users')
+
+                Button:
+                    text: "Add Product"
+                    size_hint_y: None
+                    height: 50
+                    background_color: (0.2, 0.6, 1, 1)
+                    color: (1, 1, 1, 1)
+                    on_press: root.navigate_to('add_product')
+
+                Button:
+                    text: "Change Over"
+                    size_hint_y: None
+                    height: 50
+                    background_color: (0.2, 0.6, 1, 1)
+                    color: (1, 1, 1, 1)
+                    on_press: root.navigate_to('find_shortest_path')
+                
+                Button:
+                    text: "Scheduling"
+                    size_hint_y: None
+                    height: 50
+                    background_color: (0.2, 0.6, 1, 1)
+                    color: (1, 1, 1, 1)
+                    on_press: root.navigate_to('scheduling')
+
+                    
+            Widget:  # Pushes buttons slightly upwards
+                size_hint_y: 0.5
+
+
+<AddProductScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 15
+        
+        # Header
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            spacing: 10
+            
+            Button:
+                id: back_btn
+                text: '← Back'
+                size_hint_x: None
+                width: 100
+                background_color: 0.8, 0.2, 0.2, 1
+                on_press: root.go_back()
+        
+        # Main Scrollable Area
+        ScrollView:
+            id: main_scroll
+            bar_width: 10
+            bar_color: 0, 0.5, 0.8, 1
+            scroll_type: ['bars', 'content']
+            
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 15
+                padding: 2
+                
+                # Current Products Section
+                Label:
+                    text: 'CURRENT PRODUCTS:'
+                    size_hint_y: None
+                    height: 40
+                    bold: True
+                    color: 0, 0.5, 0.8, 1
+                
+                # Product List Container
+                BoxLayout:
+                    id: products_container
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: 5
+                
+                # Toggle Button for Add Form
+                Button:
+                    id: toggle_form_btn
+                    text: '＋ ADD NEW PRODUCT'
+                    size_hint_y: None
+                    height: 50
+                    background_color: 0, 0.5, 0.8, 1
+                    on_press: root.toggle_add_form()
+                
+                # Add New Product Section (initially hidden)
+                BoxLayout:
+                    id: add_form_container
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: 0
+                    opacity: 0
+                    spacing: 10
+                    
+                    GridLayout:
+                        cols: 1
+                        size_hint_y: None
+                        height: 250  # Increased height to accommodate cancel button
+                        spacing: 10
+                        
+                        TextInput:
+                            id: name_input
+                            hint_text: 'Product Name'
+                            size_hint_y: None
+                            height: 50
+                            multiline: False
+                        
+                        TextInput:
+                            id: cycle_input
+                            hint_text: 'Cycle Time (seconds)'
+                            size_hint_y: None
+                            height: 50
+                            input_filter: 'int'
+                            multiline: False
+                        
+                        Spinner:
+                            id: ligne_spinner
+                            text: 'Select Production Line'
+                            values: ['Ligne1', 'Ligne2', 'Ligne3', 'Ligne4', 'Ligne5', 'Ligne6']
+                            size_hint_y: None
+                            height: 50
+                        
+                        BoxLayout:
+                            size_hint_y: None
+                            height: 50
+                            spacing: 10
+                            
+                            Button:
+                                id: cancel_btn
+                                text: 'CANCEL'
+                                size_hint_x: 0.5
+                                background_color: 0.8, 0.2, 0.2, 1
+                                on_press: root.toggle_add_form()
+                            
+                            Button:
+                                id: add_btn
+                                text: 'CONFIRM ADD'
+                                size_hint_x: 0.5
+                                background_color: 0, 0.7, 0, 1
+                                on_press: root.add_product()
+                            
+<FindPathScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+        
+        # ScrollView pour la sélection des produits (réduit en hauteur)
+        ScrollView:
+            size_hint_y: 0.2  # Réduit la hauteur
+            bar_width: dp(10)
+            bar_color: 1, 0, 0, 1
+            
+            GridLayout:
+                id: products_container
+                cols: 2
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 10
+                padding: 10
+                row_default_height: dp(40)
+
+        BoxLayout:
+            id: results_container
+            orientation: 'vertical'
+            size_hint_y: 0.2
+            spacing: 5
+
+        BoxLayout:
+            id: graph_container
+            size_hint: (0.8,0.4)
+            pos_hint : {'center_x':0.5}
+        BoxLayout:
+            size_hint_y: 0.1
+            spacing: 10
+            Button:
+                text: 'Calculate Optimal Path'
+                on_press: root.calculate_optimal_path()
+                font_size: 18
+                background_color: 0.2, 0.7, 0.2, 1
+             
+            Button:
+                text: 'Back to Home'
+                on_press: root.go_back()
+                font_size: 18
+                background_color: 0.8, 0.3, 0.3, 1
+<SchedulingScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: 10
+        padding: 10
+
+        Label:
+            text: "Production Scheduling"
+            font_size: 24
+            bold: True
+            size_hint_y: None
+            height: 40
+
+        ScrollView:
+            bar_width: 10
+            bar_color: 0.8, 0.2, 0.2, 1
+            GridLayout:
+                id: schedule_grid
+                cols: 4
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 5
+                padding: 5
+                row_default_height: 40
+                row_force_default: True
+                # Ajouter pour forcer la largeur des colonnes
+                col_default_width: 150
+                col_force_default: True
+
+        Label:
+            id: remaining_label
+            text: f"Remaining Time: {root.remaining_time} min\\nTotal Production Time: {root.total_production_time} min"
+            font_size: 18
+            color: (1, 0, 0, 1)
+            size_hint_y: None
+            height: 60
+
+        Button:
+            text: "Back to Home"
+            size_hint_y: None
+            height: 50
+            on_press: root.manager.current = 'home'
