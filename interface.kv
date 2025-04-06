@@ -312,42 +312,52 @@
 <SchedulingScreen>:
     BoxLayout:
         orientation: 'vertical'
-        spacing: 10
-        padding: 10
+        padding: 20
+        spacing: 20
 
         Label:
-            text: "Production Scheduling"
-            font_size: 24
+            text: "📅 Production Scheduling"
+            font_size: 28
             bold: True
+            halign: "center"
             size_hint_y: None
-            height: 40
+            height: 50
+            color: 0.1, 0.3, 0.7, 1
 
-        ScrollView:
-            bar_width: 10
-            bar_color: 0.8, 0.2, 0.2, 1
-            GridLayout:
-                id: schedule_grid
-                cols: 4
-                size_hint_y: None
-                height: self.minimum_height
-                spacing: 5
-                padding: 5
-                row_default_height: 40
-                row_force_default: True
-                # Ajouter pour forcer la largeur des colonnes
-                col_default_width: 150
-                col_force_default: True
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: (1, 1)
+
+            ScrollView:
+                bar_width: 10
+                bar_color: 0.4, 0.4, 0.6, 1
+
+                GridLayout:
+                    id: schedule_grid
+                    cols: 8  # 1 pour shifts, 7 jours
+                    size_hint_y: None
+                    height: self.minimum_height
+                    row_default_height: 60
+                    row_force_default: True
+                    col_default_width: self.width / 8
+                    col_force_default: True
+                    spacing: 2
+                    padding: 2
 
         Label:
             id: remaining_label
             text: f"Remaining Time: {root.remaining_time} min\\nTotal Production Time: {root.total_production_time} min"
             font_size: 18
-            color: (1, 0, 0, 1)
+            color: 1, 0, 0, 1
+            halign: "center"
             size_hint_y: None
             height: 60
 
         Button:
-            text: "Back to Home"
+            text: "🔙 Back to Home"
             size_hint_y: None
             height: 50
+            font_size: 16
+            background_color: 0.1, 0.4, 0.7, 1
+            color: 1, 1, 1, 1
             on_press: root.manager.current = 'home'

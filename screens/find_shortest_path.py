@@ -35,28 +35,42 @@ class ProductionGraph(BoxLayout):
         tick_vals = []
         projections = []
 
+        # Calcul du temps total pour déterminer l'unité
+        raw_total_time = sum(self.production_times.get(p, 0) for p in self.optimal_path)
+        for i in range(len(self.optimal_path) - 1):
+            raw_total_time += self.setup_times.get((self.optimal_path[i], self.optimal_path[i + 1]), 0)
+
+        display_in_hours = raw_total_time > 240
+        time_unit = "heures" if display_in_hours else "minutes"
+
+        # Fonction de conversion minutes -> heures si nécessaire
+        def convert(t):
+            return t / 60 if display_in_hours else t
+
         for idx, product in enumerate(self.optimal_path):
             prod_time = self.production_times.get(product, 0)
+            converted_prod_time = convert(prod_time)
+
             y_labels.append(product)
             tick_vals.append(idx)
 
             # Ajout de la barre de production
             fig.add_trace(go.Bar(
-                x=[prod_time],
+                x=[converted_prod_time],
                 y=[product],
                 name=f'Production de {product}',
                 orientation='h',
                 marker_color='royalblue',
-                base=total_time
+                base=convert(total_time)
             ))
 
-            # Ajout du temps de production SUR la barre bleue
+            # Ajout de l'annotation sur la barre de production
             fig.add_annotation(
-                x=total_time + (prod_time / 2),  # Position au centre du bâton
+                x=convert(total_time + (prod_time / 2)),
                 y=product,
-                text=f"{prod_time:.1f} min",  # Texte avec le temps
+                text=f"{convert(prod_time):.1f} {'h' if display_in_hours else 'min'}",
                 showarrow=False,
-                font=dict(size=12, color="white"),  # Texte blanc pour contraster avec le bleu
+                font=dict(size=12, color="white"),
                 xanchor="center",
                 yanchor="middle"
             )
@@ -68,51 +82,64 @@ class ProductionGraph(BoxLayout):
             if idx < len(self.optimal_path) - 1:
                 next_product = self.optimal_path[idx + 1]
                 changeover = self.setup_times.get((product, next_product), 0)
+                converted_changeover = convert(changeover)
 
                 fig.add_trace(go.Bar(
-                    x=[changeover],
+                    x=[converted_changeover],
                     y=[f'Changeover {idx}'],
                     name=f'Changeover {idx}',
                     orientation='h',
                     marker_color='tomato',
-                    base=total_time
+                    base=convert(total_time)
                 ))
 
                 projections.append((total_time + changeover, f'Changeover {idx}'))
                 total_time += changeover
 
-        # Ajout des projections de fin
+        # Ajout des lignes de projection
         for end_time, label in projections:
             fig.add_shape(
                 type="line",
-                x0=end_time,
+                x0=convert(end_time),
                 y0=-0.5,
-                x1=end_time,
+                x1=convert(end_time),
                 y1=len(self.optimal_path) + 1,
                 line=dict(color="black", width=1, dash="dot"),
             )
             fig.add_annotation(
-                x=end_time,
+                x=convert(end_time),
                 y=-0.5,
-                text=f"{end_time:.1f}",
+                text=f"{convert(end_time):.1f}",
                 showarrow=False,
                 yshift=-20,
                 font=dict(size=10, color="black"),
                 xanchor="center",
             )
 
-        # Mise en page du graphe
+        # Espacement des ticks dynamiques
+        if raw_total_time <= 120:
+            dtick = 5
+        elif raw_total_time <= 480:
+            dtick = 15
+        elif raw_total_time <= 1440:
+            dtick = 60
+        elif raw_total_time <= 2880:
+            dtick = 120
+        else:
+            dtick = 240
+
+        # Mise en page finale
         fig.update_layout(
             title="Séquence de Production Optimale",
             barmode='stack',
-            xaxis_title="Temps (minutes)",
+            xaxis_title=f"Temps ({time_unit})",
             yaxis_title="Produit / Changeover",
             height=500,
             width=1500,
             plot_bgcolor="white",
             showlegend=True,
             margin=dict(l=100, r=50, t=50, b=80),
-            xaxis=dict(tickmode='linear', tick0=0, dtick=5),
+            xaxis=dict(tickmode='linear', tick0=0, dtick=convert(dtick)),
         )
 
         # Affichage dans Kivy
@@ -132,8 +159,10 @@ class ProductionGraph(BoxLayout):
 
 
 
+
 class FindPathScreen(Screen):
     selected_products = []
+    prioritized_products = []
 
     def on_enter(self):
         Clock.schedule_once(lambda dt: self.load_products())
@@ -144,9 +173,11 @@ class FindPathScreen(Screen):
         grid.clear_widgets()
 
         for product in products:
+            row = BoxLayout(orientation='horizontal', size_hint_y=None, height=40)
+
             lbl = Label(
                 text=product,
-                size_hint_x=0.8,
+                size_hint_x=0.6,
                 color=(0, 0, 0, 1),
                 font_size=18,
                 halign='left',
@@ -154,14 +185,28 @@ class FindPathScreen(Screen):
             )
             lbl.bind(size=lbl.setter('text_size'))
 
-            cb = CheckBox(
-                size_hint_x=0.2,
-                color=(0.2, 0.5, 0.8, 1)
-            )
+            cb = CheckBox(size_hint_x=0.2)
             cb.bind(active=lambda instance, value, p=product: self.on_checkbox_active(instance, value, p))
 
-            grid.add_widget(lbl)
-            grid.add_widget(cb)
+            p_btn = Button(
+                text='P',
+                size_hint_x=0.2,
+                background_color=(1, 0.7, 0.2, 1),
+                on_press=lambda instance, p=product: self.toggle_priority(p, instance)
+            )
+
+            row.add_widget(lbl)
+            row.add_widget(cb)
+            row.add_widget(p_btn)
+            grid.add_widget(row)
+
+    def toggle_priority(self, product, button):
+        if product in self.prioritized_products:
+            self.prioritized_products.remove(product)
+            button.background_color = (1, 0.7, 0.2, 1)  # orange = désactivé
+        else:
+            self.prioritized_products.append(product)
+            button.background_color = (0, 1, 0, 1)  # vert = prioritaire
 
     def on_checkbox_active(self, instance, value, product):
         if value:
@@ -226,10 +271,22 @@ class FindPathScreen(Screen):
 
             self.ids.results_container.add_widget(path_label)
             self.ids.results_container.add_widget(time_label)
+            goto_btn = Button(
+                text="Aller au planning",
+                size_hint=(1, None),
+                height=50,
+                background_color=(0.2, 0.6, 1, 1),
+                color=(1, 1, 1, 1),
+                font_size=18,
+                on_press=self.go_to_scheduling
+            )
+            self.ids.results_container.add_widget(goto_btn)
+
             self.create_production_graph(best_path)
-            self.manager.current = 'scheduling'
         else:
             self._display_message("No valid path found", color=(1, 0, 0, 1))
+    def go_to_scheduling(self, instance):
+        self.manager.current = 'scheduling'
 
     def create_production_graph(self, best_path):
         conn = create_connection()
@@ -297,31 +354,44 @@ class FindPathScreen(Screen):
         if not products:
             return [], 0
 
+        prioritized = [p for p in self.prioritized_products if p in products]
         best_path = None
         best_time = float('inf')
 
-        for start_product in products:
+        for start_product in prioritized or products:
             current_product = start_product
             unvisited = set(products)
             unvisited.remove(current_product)
             path = [current_product]
             total_time = 0
+            local_prioritized = prioritized.copy()
+            if current_product in local_prioritized:
+                local_prioritized.remove(current_product)
 
             while unvisited:
+                candidates = [p for p in unvisited if p in local_prioritized] or list(unvisited)
                 next_product = min(
-                    unvisited,
-                    key=lambda p: setup_times.get((current_product, p), float('inf')))
+                    candidates,
+                    key=lambda p: setup_times.get((current_product, p), float('inf')),
+                    default=None
+                )
+                if not next_product:
+                    break
                 total_time += setup_times.get((current_product, next_product), 0)
                 current_product = next_product
                 path.append(current_product)
                 unvisited.remove(current_product)
+                if current_product in local_prioritized:
+                    local_prioritized.remove(current_product)
 
-            if total_time < best_time:
+            print(f"Trying start: {start_product} => Path: {path}, Time: {total_time}")
+            if total_time < best_time and len(path) == len(products):
                 best_time = total_time
                 best_path = path
 
-        return best_path, best_time
-   
+        print(f"Best path: {best_path}")
+        return best_path, best_time if best_path else ([], 0)
+
 
     def go_back(self):
         self.manager.current = 'home'

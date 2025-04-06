@@ -34,39 +34,42 @@ class SchedulingScreen(Screen):
     def create_schedule_layout(self):
         grid = self.ids.schedule_grid
         grid.clear_widgets()
-        
-        # Entêtes avec hauteur fixe
-        headers = ["Day", "Shift A", "Shift B", "Shift C"]
-        for header in headers:
-            lbl = Label(
-                text=header, 
-                bold=True,
-                size_hint_y=None,
-                height=40  # Hauteur fixe
-            )
-            grid.add_widget(lbl)
 
-        # Jours et cases avec dimensions contrôlées
+        # Jours en haut (ligne d'entête)
+        grid.add_widget(Label(text="", bold=True))
         days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-        for day_idx, day in enumerate(days):
-            # Libellé du jour
-            lbl = Label(
+        for day in days:
+            grid.add_widget(Label(
                 text=day,
-                size_hint_y=None,
-                height=40  # Hauteur identique aux entêtes
-            )
-            grid.add_widget(lbl)
-            
-            # Cases pour chaque shift
-            for shift_idx in range(3):
+                bold=True,
+                font_size=16,
+                color=(0.1, 0.2, 0.6, 1)
+            ))
+
+        # Shifts + boutons
+        shifts = ["Shift A", "Shift B", "Shift C"]
+        for shift_idx, shift in enumerate(shifts):
+            grid.add_widget(Label(
+                text=shift,
+                bold=True,
+                font_size=14,
+                color=(0, 0.5, 0.2, 1)
+            ))
+            for day_idx in range(7):
+                checked = self.schedule[day_idx][shift_idx]
                 btn = Button(
-                    text="✓" if self.schedule[day_idx][shift_idx] else "",
-                    background_color=(0, 0.7, 0, 1) if self.schedule[day_idx][shift_idx] else (0.7, 0, 0, 1),
+                    text="✓" if checked else "",
+                    background_color=(0.1, 0.7, 0.3, 1) if checked else (0.8, 0.2, 0.2, 1),
+                    color=(1, 1, 1, 1),
+                    font_size=18,
                     size_hint=(None, None),
-                    size=(100, 40)  # Largeur fixe + hauteur
+                    size=(110, 50),
+                    background_normal=''
                 )
                 btn.bind(on_press=lambda instance, x=day_idx, y=shift_idx: self.update_schedule(x, y, instance))
                 grid.add_widget(btn)
+
+
     def update_schedule(self, day, shift, instance):
         self.schedule[day][shift] = not self.schedule[day][shift]
         instance.text = "✓" if self.schedule[day][shift] else ""
